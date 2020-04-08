@@ -11,7 +11,7 @@ def train(epochs,model,dataloader_train,dataloader_valid,iterations_valid,iterat
         learning_rate=1.0
         lossFunction=nn.CrossEntropyLoss()
         
-        best_perplexity=1000
+        best_perplexity=10000
         old_perplexity=10000
          
         for epoch in range(epochs):
