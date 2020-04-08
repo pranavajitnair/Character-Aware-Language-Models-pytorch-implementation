@@ -58,8 +58,25 @@ def train(epochs,model,dataloader_train,dataloader_valid,iterations_valid,iterat
                         optimizer.step()
                         
                 training_loss=np.mean(training_losses)
-                print('epoch=',epoch+1,'training loss=',training_loss,'validation loss=',validation_loss,'learning rate=',learning_rate)
+                print('epoch=',epoch+1,'training loss=',training_loss,'validation loss=',validation_loss)
+                
+        print('Best Perplexity=',best_perplexity)
                         
+def test(model,dataloader_test,iterations_test):
+        model.eval()
+        lossFunction=nn.CrossEntropyLoss()
+        losses=0
+        
+        for _ in range(iterations_test):
+                model.zero_grad()
+                x,y=dataloader_test.load_train_batch()
+                output=model(x)
+                
+                loss=lossFunction(output,y)
+                losses+=loss.item()
+        
+        print('test loss=',losses/iterations_test,'test perplexity=',np.exp(losses/iterations_test))
+        
 
 sentences_train=read_data(os.getcwd()+'/train.txt')
 sentences_test=read_data(os.getcwd()+'/test.txt')
@@ -71,17 +88,18 @@ seq_size=35
 char_dim=15
 hidden_size=300
 
-epochs=400
+epochs=35
 iterations_valid=13
 iterations_train=23
+iterations_test=10
 
 word_to_int,int_to_word,char_to_int,int_to_char,vocab_size,n_chars,ma=get_dicts(sentences_train+sentences_test+sentences_validation)
 
 data_x,data_y=get_training_data(sentences_train,char_to_int,word_to_int,ma,batch_size,seq_size)
 dataLoader_train=DataLoader(data_x,data_y,batch_size,seq_size)
 
-#test_x,test_y=get_training_data(sentences_test,char_to_int,word_to_int,ma,batch_size,seq_size)
-#dataLoader_test=DataLoader(test_x,test_y,batch_size,seq_size)
+test_x,test_y=get_training_data(sentences_test,char_to_int,word_to_int,ma,batch_size,seq_size)
+dataLoader_test=DataLoader(test_x,test_y,batch_size,seq_size)
 
 valid_x,valid_y=get_training_data(sentences_validation,char_to_int,word_to_int,ma,batch_size,seq_size)
 dataLoader_valid=DataLoader(valid_x,valid_y,batch_size,seq_size)
@@ -89,3 +107,5 @@ dataLoader_valid=DataLoader(valid_x,valid_y,batch_size,seq_size)
 model=ConvolutionModel(char_dim,n_chars,ma+2,vocab_size,batch_size,seq_size,hidden_size)
 
 train(epochs,model,dataLoader_train,dataLoader_valid,iterations_valid,iterations_train)
+
+test(model,dataLoader_test,iterations_test)
